@@ -1,4 +1,4 @@
-﻿GO
+﻿GO //hello
 CREATE PROC Original_Content_Search
 @typename varchar(50),
 @categoryname carhar(50)
