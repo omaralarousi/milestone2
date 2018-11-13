@@ -1,0 +1,266 @@
+﻿use Project_DB_MS2;
+
+create table [User] (
+ID INT IDENTITY, 
+email VARCHAR(254),
+first_name VARCHAR(20),
+middle_name VARCHAR(20),
+last_name VARCHAR(20),
+birth_date datetime NOT NULL,
+age AS (YEAR(CURRENT_TIMESTAMP) - YEAR(birth_date)),
+password VARCHAR(128),
+PRIMARY KEY(iD) 
+);
+create table Category (
+[type] VARCHAR(30),
+[description] TEXT,
+PRIMARY KEY ([type])
+);
+
+create table Sub_Category (
+category_type VARCHAR(30),
+[name] VARCHAR (30),
+PRIMARY KEY(category_type),
+FOREIGN KEY(category_type) REFERENCES Category ON DELETE CASCADE ON UPDATE CASCADE,
+);
+
+
+Create table Content_type
+(
+[type] VARCHAR(20),
+PRIMARY KEY([type])
+);
+
+create table Viewer (
+ID INT,
+working_place VARCHAR(300), 
+working_place_type VARCHAR (300),
+working_place_description VARCHAR (500),
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES [User] ON DELETE CASCADE ON UPDATE CASCADE,
+
+);
+
+
+create table Notified_Person(
+ID INT IDENTITY,
+PRIMARY KEY(ID));
+
+
+create table Contributor (
+ID INT,
+portfolio_linkb VARCHAR(2048),
+years_of_experience INT,
+portfolio_link VARCHAR(2048),
+specialization VARCHAR(50),
+notified_id INT ,
+FOREIGN KEY(ID) REFERENCES [User] ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(notified_id) REFERENCES Notified_Person ON DELETE CASCADE ON UPDATE CASCADE,
+PRIMARY KEY(ID));
+
+
+create table Staff(
+ID INT,
+hire_date datetime NOT NULL,
+working_hours INT,
+payment_rate DECIMAL(20,2),
+notified_id INT,
+total_salary AS (payment_rate*working_hours),
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES [User] ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(notified_id) REFERENCES Notified_Person ON DELETE CASCADE ON UPDATE CASCADE,
+);
+
+create table Content_manager(
+ID INT,
+[type] VARCHAR(20),
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Staff ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY([type]) REFERENCES Content_type ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+create table Reviewer (
+ID INT ,
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Staff ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+create table Message(
+sent_at datetime NOT NULL,
+contributer_id INT ,
+viewer_id INT, 
+sender_type VARCHAR(40),
+read_at datetime NOT NULL,
+[text] TEXT,
+read_status bit,
+PRIMARY KEY(sent_at, contributer_id, viewer_id, sender_type),
+FOREIGN KEY(contributer_id) REFERENCES Contributor ON DELETE no action ON UPDATE no action,
+FOREIGN KEY(viewer_id) REFERENCES Viewer ON DELETE no action ON UPDATE no action
+);
+
+
+
+
+Create Table Notification_Object
+(
+ID INT IDENTITY,
+PRIMARY KEY(ID)
+);
+
+
+
+Create Table Content
+(
+ID INT IDENTITY,
+link VARCHAR(255),
+uploaded_at datetime,
+contributer_id INT,
+category_type VARCHAR(30),
+subcategory_name VARCHAR(30),
+[type] VARCHAR(20),
+PRIMARY KEY(ID),
+FOREIGN KEY(contributer_id) REFERENCES Contributor ,
+FOREIGN KEY(category_type) REFERENCES Sub_Category ,
+FOREIGN KEY(subcategory_name) REFERENCES Sub_Category ,
+FOREIGN KEY([type]) REFERENCES Content_type 
+);
+Create Table Original_Content
+(
+ID INT,
+[status] VARCHAR(30),
+content_manager_id INT,
+reviewer_id INT,
+review_status VARCHAR(30),
+filter_status VARCHAR(30),
+rating DECIMAL(2,1) CONSTRAINT chk_Ratings CHECK (rating >= 0 AND rating <= 5),
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Content ,
+FOREIGN KEY(content_manager_id) REFERENCES Content_Manager ,
+FOREIGN KEY(reviewer_id) REFERENCES Reviewer 
+);
+
+Create Table Existing_Request
+(
+id INT IDENTITY,
+original_content_id INT,
+viewer_id INT,
+PRIMARY KEY(id),
+FOREIGN KEY(original_content_id) REFERENCES Original_Content ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(viewer_id) REFERENCES Viewer ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table New_Request
+(
+id INT IDENTITY,
+accept_status BIT,
+specified VARCHAR(100),
+information VARCHAR(100),
+viewer_id INT,
+notif_obj_id INT,
+contributer_id INT,
+PRIMARY KEY(id),
+FOREIGN KEY(viewer_id) REFERENCES Viewer ,
+FOREIGN KEY(notif_obj_id) REFERENCES Notification_Object ,
+FOREIGN KEY(contributer_id) REFERENCES Contributor 
+);
+
+Create Table New_Content
+(
+ID INT,
+new_request_id INT,
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Content ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(new_request_id) REFERENCES New_Request ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+Create Table Comment
+(
+Viewer_id INT,
+original_content_id INT,
+[date] datetime,
+[text] TEXT,
+PRIMARY KEY(Viewer_id, original_content_id, [date]),
+FOREIGN KEY(Viewer_id) REFERENCES Viewer ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(original_content_id) REFERENCES Original_Content ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table Rate
+(
+viewer_id INT,
+original_content_id INT,
+[date] datetime,
+rate DECIMAL(2,1) CONSTRAINT chk1_Ratings CHECK (rate >= 0 AND rate <= 5),
+PRIMARY KEY(Viewer_id, original_content_id),
+FOREIGN KEY(Viewer_id) REFERENCES Viewer ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(original_content_id) REFERENCES Original_Content ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table [Event]
+(
+id INT IDENTITY,
+[description] TEXT,
+[location] VARCHAR(100),
+city VARCHAR(30),
+[time] TIMESTAMP,
+entertainer VARCHAR(100),
+notification_object_id INT,
+viewer_id INT,
+PRIMARY KEY(id),
+FOREIGN KEY(notification_object_id) REFERENCES Notification_Object ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(viewer_id) REFERENCES Viewer ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table Event_Photos_link
+(
+event_id INT,
+link VARCHAR(255),
+PRIMARY KEY(event_id, link),
+FOREIGN KEY(event_id) REFERENCES [Event] ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table Advertisement
+(
+id INT IDENTITY,
+[description] TEXT,
+[location] VARCHAR(100),
+event_id INT,
+viewer_id INT,
+PRIMARY KEY(id),
+FOREIGN KEY(event_id) REFERENCES [Event] ,
+FOREIGN KEY(viewer_id) REFERENCES Viewer 
+);
+
+Create Table Ads_Video_Link
+(
+advertisement_id INT,
+link VARCHAR(255),
+PRIMARY KEY(advertisement_id, link),
+FOREIGN KEY(advertisement_id) REFERENCES Advertisement ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table Ads_Photos_Link
+(
+advertisement_id INT,
+link VARCHAR(255),
+PRIMARY KEY(advertisement_id, link),
+FOREIGN KEY(advertisement_id) REFERENCES Advertisement ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+Create Table Announcement
+(
+ID INT IDENTITY,
+seen_at datetime,
+sent_at datetime,
+notified_person_id INT,
+notification_object_id INT,
+PRIMARY KEY(ID),
+FOREIGN KEY(notified_person_id) REFERENCES Notified_Person ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY(notification_object_id) REFERENCES Notification_Object ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+
+
+
+
